@@ -1,13 +1,17 @@
 // Libs
 const { createLogger, format, transports, config } = require('winston');
+const { join, basename } = require('path');
+const DailyRotateFile = require('winston-daily-rotate-file');
 const chalk = require('chalk');
+// Constants
+const { LOG } = require('../config');
 
 /**
  *
  * @param {*} context string
  * @returns
  */
-const createLogger = context => {
+const initLogger = context => {
   return createLogger({
     levels: config.npm.levels,
     exitOnError: false,
@@ -44,7 +48,7 @@ const createTransports = () => {
         maxSize: '10m',
         maxFiles: '15d',
         auditFile: join(__dirname, '../../logs', 'logger-audit.json'),
-        format: this.fileFormat()
+        format: fileFormat()
       })
     );
   }
@@ -68,4 +72,15 @@ const consoleFormat = () => {
   );
 };
 
-module.exports.LoggerLoader = { createLogger };
+/**
+ * Describe el formato de salida para los ficheros de logs.
+ */
+const fileFormat = () => {
+  return format.combine(
+    format.splat(),
+    format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+    format.printf(info => `[${info.timestamp}] [${info.level.toUpperCase()}]: ${info.message}`)
+  );
+};
+
+module.exports.LoggerLoader = { initLogger };
